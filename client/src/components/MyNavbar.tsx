@@ -33,7 +33,14 @@ const MyNavbar = () => {
           {loggedInUser ? (
             <>
               <div className="hidden md:block text-sm font-medium text-gray-600 mr-2">
-                Hoş geldin, <span className="text-black font-bold">{loggedInUser.username}</span> 
+                Hoş geldin, 
+                <span 
+                  onClick={() => navigate("/profile")} 
+                  className="text-black font-bold cursor-pointer hover:text-purple-600 hover:underline ml-1"
+                  title="Profil Ayarları"
+                >
+                  {loggedInUser.username}
+                </span> 
                 <span className="text-xs ml-1 px-2 py-0.5 rounded bg-gray-100 border text-gray-500">
                   {loggedInUser.role === 'admin' ? 'YÖNETİCİ' : 'ÜYE'}
                 </span>
@@ -97,11 +104,18 @@ const MyNavbar = () => {
 
             {/* SADECE NORMAL ÜYE LINKLERİ */}
             {loggedInUser && loggedInUser.role !== 'admin' && (
-              <li>
-                <button onClick={() => navigate("/my-loans")} className={`block py-2 pr-4 pl-3 ${isActive("/my-loans")}`}>
-                  📖 Kitaplarım
-                </button>
-              </li>
+              <>
+                <li>
+                  <button onClick={() => navigate("/my-loans")} className={`block py-2 pr-4 pl-3 ${isActive("/my-loans")}`}>
+                    📖 Kitaplarım
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => navigate("/favorites")} className={`block py-2 pr-4 pl-3 ${isActive("/favorites")}`}>
+                    ❤️ Favorilerim
+                  </button>
+                </li>
+              </>
             )}
 
           </ul>
