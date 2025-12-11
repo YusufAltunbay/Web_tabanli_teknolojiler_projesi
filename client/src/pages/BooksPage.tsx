@@ -29,18 +29,20 @@ const BooksPage = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
 
   // Modallar
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showReadModal, setShowReadModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false); // Yorum Ekle Modalı
+  const [showReadModal, setShowReadModal] = useState(false); // Yorum Oku Modalı
+  const [showEditModal, setShowEditModal] = useState(false); // Kitap Düzenle Modalı
 
   // Seçili Veriler
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
   const [selectedBookTitle, setSelectedBookTitle] = useState("");
   const [bookReviews, setBookReviews] = useState<Review[]>([]);
   
-  // Form Verileri
+  // Form Verileri (Yorum)
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(5);
+
+  // Form Verileri (Kitap Düzenleme)
   const [editTitle, setEditTitle] = useState("");
   const [editPageCount, setEditPageCount] = useState("");
   const [editStock, setEditStock] = useState("");
@@ -71,13 +73,12 @@ const BooksPage = () => {
 
   // --- İŞLEMLER ---
 
-  // Favorilere Ekleme Fonksiyonu (YENİ EKLENDİ)
+  // Favorilere Ekle
   const handleAddFavorite = (bookId: number) => {
     if (!loggedInUser) return toast.warning("Lütfen giriş yapın.");
     
     api.post("favorites", { bookId })
       .then((res) => {
-        // Backend'den gelen mesajı kontrol et (Zaten ekli mi?)
         if(res.data.message) {
             toast.info(res.data.message);
         } else {
@@ -87,6 +88,7 @@ const BooksPage = () => {
       .catch((err) => toast.error("Favorilere eklenirken hata oluştu."));
   };
 
+  // Ödünç Al
   const handleBorrow = (bookId: number) => {
     if (!loggedInUser) return toast.warning("Lütfen giriş yapın.");
     api.post("loans", { bookId })
@@ -94,6 +96,7 @@ const BooksPage = () => {
       .catch((err) => toast.error(err.response?.data?.message || "Hata oluştu"));
   };
 
+  // Kitap Sil (Admin)
   const handleDeleteBook = (id: number) => {
     if(!confirm("Silmek istediğinize emin misiniz?")) return;
     api.delete(`books/${id}`)
@@ -101,6 +104,7 @@ const BooksPage = () => {
       .catch((err) => toast.error("Silinemedi: " + err.response?.data?.message));
   };
 
+  // Düzenleme Modalını Aç
   const handleOpenEdit = (book: Book) => {
     setSelectedBookId(book.id);
     setEditTitle(book.title);
@@ -109,6 +113,7 @@ const BooksPage = () => {
     setShowEditModal(true);
   };
 
+  // Kitap Güncelle
   const handleUpdateBook = () => {
     if (!selectedBookId) return;
     api.put(`books/${selectedBookId}`, {
@@ -124,18 +129,33 @@ const BooksPage = () => {
     .catch((err) => toast.error("Güncelleme başarısız."));
   };
 
+  // Yorumları Oku Modalını Aç
   const handleOpenReadModal = (bookId: number, title: string) => {
     setSelectedBookTitle(title);
     api.get(`reviews/book/${bookId}`).then((res) => { setBookReviews(res.data); setShowReadModal(true); });
   };
   
+  // Yorum Gönder (DÜZELTİLDİ: Kutu Temizleme Eklendi)
   const handleSubmitReview = () => {
     if (!selectedBookId) return;
+    
+    if (!comment.trim()) {
+        toast.warning("Lütfen yorum yazın.");
+        return;
+    }
+
     api.post("reviews", { bookId: selectedBookId, comment, rating: Number(rating) })
-      .then(() => { toast.success("Yorum eklendi"); setShowAddModal(false); })
+      .then(() => { 
+          toast.success("Yorum eklendi!"); 
+          setShowAddModal(false);
+          // TEMİZLİK İŞLEMİ:
+          setComment("");
+          setRating(5);
+      })
       .catch((err) => toast.error("Hata: " + err.response?.data?.message));
   };
 
+  // Yorum Sil (Admin)
   const handleDeleteReview = (id: number) => {
     api.delete(`reviews/${id}`).then(() => { setBookReviews(prev => prev.filter(r => r.id !== id)); toast.success("Yorum silindi"); });
   };
@@ -230,7 +250,6 @@ const BooksPage = () => {
                         ⭐ Puanla
                     </button>
 
-                    {/* FAVORİ BUTONU (YENİ EKLENDİ) */}
                     <button 
                         onClick={() => handleAddFavorite(book.id)}
                         className="bg-red-50 hover:bg-red-100 text-red-500 font-bold py-1.5 px-3 rounded text-sm transition border border-red-200"

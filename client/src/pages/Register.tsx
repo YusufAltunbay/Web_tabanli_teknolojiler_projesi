@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("member"); // Varsayılan rol: Üye
   const navigate = useNavigate();
 
   function handleRegister(e: React.FormEvent) {
@@ -15,7 +16,8 @@ const Register = () => {
         return;
     }
 
-    api.post("auth/register", { username, password })
+    // Backend'e rol bilgisini de gönderiyoruz
+    api.post("auth/register", { username, password, role })
       .then(() => {
         toast.success("Kayıt başarılı! Şimdi giriş yapabilirsiniz.");
         navigate("/login");
@@ -31,6 +33,8 @@ const Register = () => {
             Yeni Hesap Oluştur
           </h1>
           <form className="space-y-4 md:space-y-6" onSubmit={handleRegister}>
+            
+            {/* Kullanıcı Adı */}
             <div>
               <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900">
                 Kullanıcı Adı Seçin
@@ -45,6 +49,8 @@ const Register = () => {
                 required
               />
             </div>
+
+            {/* Şifre */}
             <div>
               <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900">
                 Şifre Belirleyin
@@ -58,6 +64,25 @@ const Register = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+
+            {/* Rol Seçimi (YENİ EKLENDİ) */}
+            <div>
+              <label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-900">
+                Hesap Türü
+              </label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-purple-600 focus:border-purple-600 block w-full p-2.5 outline-none transition-colors"
+              >
+                <option value="member">Normal Üye (Kitap Okuyucu)</option>
+                <option value="admin">Yönetici (Admin)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                *Proje demosu olduğu için yönetici seçebilirsiniz.
+              </p>
             </div>
             
             <button
