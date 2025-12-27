@@ -1,0 +1,26 @@
+import { Module } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { UsersModule } from '../users/users.module';
+import { JwtModule } from '@nestjs/jwt';
+import { jwtConstants } from './constants';
+import { PassportModule } from '@nestjs/passport'; // <-- EKLENDİ
+import { JwtStrategy } from './jwt.strategy';     // <-- EKLENDİ
+
+@Module({
+  imports: [
+    UsersModule,
+    PassportModule, // <-- EKLENDİ
+    JwtModule.register({
+      global: true,
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '1h' },
+    }),
+  ],
+  providers: [
+    AuthService, 
+    JwtStrategy // <-- BURASI ÇOK ÖNEMLİ: Stratejiyi buraya ekledik
+  ],
+  controllers: [AuthController],
+})
+export class AuthModule {}

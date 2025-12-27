@@ -1,0 +1,35 @@
+import { Controller, Get, Delete, Put, Param, Body, Request, UseGuards } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from './user.entity';
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  // Admin: Tüm kullanıcıları listele
+  @Get()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN)
+  getAllUsers() {
+    return this.usersService.findAll();
+  }
+
+  // Admin: Kullanıcı sil
+  @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN)
+  deleteUser(@Param('id') id: number) {
+    return this.usersService.remove(id);
+  }
+
+  // EKSİK OLAN KISIM BURASIYDI:
+  // Herkes: Kendi şifresini güncelle (PUT /users/profile)
+  @Put('profile')
+  @UseGuards(AuthGuard('jwt'))
+  updateProfile(@Request() req, @Body('password') password: string) {
+    return this.usersService.updateProfile(req.user.userId, password);
+  }
+}
