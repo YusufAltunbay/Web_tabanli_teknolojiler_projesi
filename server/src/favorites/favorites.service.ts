@@ -1,46 +1,43 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Favorite } from './favorite.entity';
-import { Book } from '../books/book.entity';
-import { User } from '../users/user.entity';
 
 @Injectable()
 export class FavoritesService {
   constructor(
-    @InjectRepository(Favorite) private favRepo: Repository<Favorite>,
-    @InjectRepository(Book) private bookRepo: Repository<Book>,
+    @InjectRepository(Favorite)
+    private favRepository: Repository<Favorite>,
   ) {}
 
-  // Favorilere Ekle (Varsa hata verme, yoksa ekle)
+  // Favoriye Ekle
   async addFavorite(userId: number, bookId: number) {
-    const book = await this.bookRepo.findOneBy({ id: bookId });
-    if (!book) throw new BadRequestException('Kitap bulunamadı');
-
-    // Zaten ekli mi?
-    const exists = await this.favRepo.findOne({
-      where: { user: { id: userId }, book: { id: bookId } },
+    const exists = await this.favRepository.findOne({
+        where: { user: { id: userId }, book: { id: bookId } }
     });
+    
+    if (exists) return { message: "Zaten favorilerde ekli." };
 
-    if (exists) return { message: 'Zaten favorilerde ekli.' };
-
-    const fav = this.favRepo.create({
-      user: { id: userId } as User,
-      book: { id: bookId } as Book,
+    const fav = this.favRepository.create({
+        user: { id: userId },
+        book: { id: bookId }
     });
-    return this.favRepo.save(fav);
+    return this.favRepository.save(fav);
   }
 
-  // Kullanıcının Favorilerini Getir
-  async getMyFavorites(userId: number) {
-    return this.favRepo.find({
-      where: { user: { id: userId } },
-      relations: ['book'], // Kitap detaylarını getir
+  // Favoriden Çıkar (YENİ)
+  async removeFavorite(userId: number, bookId: number) {
+    return this.favRepository.delete({ 
+        user: { id: userId }, 
+        book: { id: bookId } 
     });
   }
 
-  // Favoriden Çıkar
-  async removeFavorite(favId: number) {
-    return this.favRepo.delete(favId);
+  // Kullanıcının Favorilerini Getir (YENİ - Kalpleri boyamak için lazım)
+  async getUserFavorites(userId: number) {
+    return this.favRepository.find({
+        where: { user: { id: userId } },
+        relations: ['book']
+    });
   }
 }

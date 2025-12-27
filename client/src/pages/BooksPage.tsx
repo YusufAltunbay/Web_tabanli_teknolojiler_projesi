@@ -24,6 +24,9 @@ const BooksPage = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // YENİ EKLENDİ: Favori kitapların ID'lerini tutan liste
+  const [favoriteBookIds, setFavoriteBookIds] = useState<number[]>([]);
+
   // Filtreleme State'leri
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
@@ -50,7 +53,11 @@ const BooksPage = () => {
   useEffect(() => {
     fetchBooks();
     fetchCategories();
-  }, []);
+    // YENİ EKLENDİ: Eğer kullanıcı giriş yapmışsa favorilerini çek
+    if (loggedInUser) {
+        fetchMyFavorites();
+    }
+  }, [loggedInUser]);
 
   const fetchBooks = () => {
     api.get("books")
@@ -64,6 +71,40 @@ const BooksPage = () => {
       .catch(() => console.error("Kategoriler alınamadı"));
   };
 
+  // YENİ EKLENDİ: Kullanıcının favorilerini çekip ID listesi yapıyoruz
+  const fetchMyFavorites = () => {
+    api.get("favorites").then((res) => {
+        // Gelen veri: [{id: 1, book: {id: 5, ...}}, ...] şeklindedir.
+        const ids = res.data.map((fav: any) => fav.book.id);
+        setFavoriteBookIds(ids);
+    });
+  };
+
+  // YENİ EKLENDİ: Kalbe basınca çalışan akıllı fonksiyon
+  const toggleFavorite = (bookId: number) => {
+    if (!loggedInUser) return toast.warning("Lütfen giriş yapın.");
+
+    const isFavorited = favoriteBookIds.includes(bookId);
+
+    if (isFavorited) {
+        // Zaten favoride -> ÇIKAR (DELETE)
+        api.delete(`favorites/${bookId}`)
+           .then(() => {
+               toast.info("Favorilerden çıkarıldı.");
+               setFavoriteBookIds(prev => prev.filter(id => id !== bookId)); // State'ten sil
+           })
+           .catch(() => toast.error("İşlem başarısız."));
+    } else {
+        // Favoride değil -> EKLE (POST)
+        api.post("favorites", { bookId })
+           .then(() => {
+               toast.success("Favorilere eklendi! ❤️");
+               setFavoriteBookIds(prev => [...prev, bookId]); // State'e ekle
+           })
+           .catch(() => toast.error("İşlem başarısız."));
+    }
+  };
+
   // --- FİLTRELEME MANTIĞI ---
   const filteredBooks = books.filter((book) => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -72,21 +113,6 @@ const BooksPage = () => {
   });
 
   // --- İŞLEMLER ---
-
-  // Favorilere Ekle
-  const handleAddFavorite = (bookId: number) => {
-    if (!loggedInUser) return toast.warning("Lütfen giriş yapın.");
-    
-    api.post("favorites", { bookId })
-      .then((res) => {
-        if(res.data.message) {
-            toast.info(res.data.message);
-        } else {
-            toast.success("Favorilere eklendi! ❤️");
-        }
-      })
-      .catch((err) => toast.error("Favorilere eklenirken hata oluştu."));
-  };
 
   // Ödünç Al
   const handleBorrow = (bookId: number) => {
@@ -135,7 +161,7 @@ const BooksPage = () => {
     api.get(`reviews/book/${bookId}`).then((res) => { setBookReviews(res.data); setShowReadModal(true); });
   };
   
-  // Yorum Gönder (DÜZELTİLDİ: Kutu Temizleme Eklendi)
+  // Yorum Gönder
   const handleSubmitReview = () => {
     if (!selectedBookId) return;
     
@@ -148,7 +174,6 @@ const BooksPage = () => {
       .then(() => { 
           toast.success("Yorum eklendi!"); 
           setShowAddModal(false);
-          // TEMİZLİK İŞLEMİ:
           setComment("");
           setRating(5);
       })
@@ -250,13 +275,19 @@ const BooksPage = () => {
                         ⭐ Puanla
                     </button>
 
+                    {/* --- GÜNCELLENEN KALP BUTONU --- */}
                     <button 
-                        onClick={() => handleAddFavorite(book.id)}
-                        className="bg-red-50 hover:bg-red-100 text-red-500 font-bold py-1.5 px-3 rounded text-sm transition border border-red-200"
-                        title="Favorilere Ekle"
+                        onClick={() => toggleFavorite(book.id)}
+                        className={`py-1.5 px-3 rounded text-lg transition border ${
+                            favoriteBookIds.includes(book.id) 
+                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' // KALP KIRMIZI
+                                : 'bg-white text-gray-400 border-gray-300 hover:text-red-500 hover:border-red-300' // KALP BOŞ
+                        }`}
+                        title={favoriteBookIds.includes(book.id) ? "Favorilerden Çıkar" : "Favorilere Ekle"}
                     >
-                        ❤️
+                        {favoriteBookIds.includes(book.id) ? "❤️" : "🤍"}
                     </button>
+                    {/* ------------------------------- */}
                   </>
                 )}
               </div>
@@ -274,7 +305,7 @@ const BooksPage = () => {
         )}
       </div>
 
-      {/* --- MODALLAR --- */}
+      {/* --- MODALLAR (AYNEN KALDI) --- */}
       
       {/* Kitap Güncelleme Modalı */}
       {showEditModal && (
