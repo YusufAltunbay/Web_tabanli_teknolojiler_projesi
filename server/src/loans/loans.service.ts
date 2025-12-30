@@ -12,50 +12,68 @@ export class LoansService {
     @InjectRepository(Book) private bookRepo: Repository<Book>,
   ) {}
 
-  // Tüm Ödünçleri Getir (Admin İçin) - Kitap ve Kullanıcı bilgisiyle
+  // Tüm Ödünçleri Getir (Admin İçin)
   async findAll() {
     return this.loanRepo.find({
       relations: ['book', 'user'],
-      order: { borrowDate: 'DESC' }, // En yeniler üstte
-    });
-  }
-  async findMyLoans(userId: number) {
-    return this.loanRepo.find({
-      where: { user: { id: userId } }, // Sadece bu user ID'ye ait olanlar
-      relations: ['book'], // Kitap detaylarını da getir
       order: { borrowDate: 'DESC' },
     });
   }
 
-  // Kitap Ödünç Al (Stok Kontrollü ve 1 Aylık)
+  // Kullanıcının Ödünçleri
+  async findMyLoans(userId: number) {
+    return this.loanRepo.find({
+      where: { user: { id: userId } },
+      relations: ['book'],
+      order: { borrowDate: 'DESC' },
+    });
+  }
+
+  // Kitap Ödünç Al (GÜNCELLENDİ: Aynı kitap kontrolü eklendi)
   async borrowBook(userId: number, bookId: number) {
+    // 1. Kitabı Bul
     const book = await this.bookRepo.findOneBy({ id: bookId });
     if (!book) throw new BadRequestException('Kitap bulunamadı');
 
+    // --- YENİ EKLENEN KISIM: KONTROL ---
+    // Kullanıcı bu kitabı daha önce almış mı ve hala elinde mi?
+    const existingLoan = await this.loanRepo.findOne({
+        where: {
+            user: { id: userId },
+            book: { id: bookId }
+        }
+    });
+
+    if (existingLoan) {
+        throw new BadRequestException('Bu kitabı zaten ödünç aldınız! İade etmeden tekrar alamazsınız.');
+    }
+    // ------------------------------------
+
+    // 2. Stok Kontrolü
     if (book.stock <= 0) {
       throw new BadRequestException('Üzgünüz, bu kitabın stoğu tükenmiş.');
     }
 
-    // 1. Stoğu düş
+    // 3. Stoğu düş
     book.stock -= 1;
     await this.bookRepo.save(book);
 
-    // 2. İade Tarihini Hesapla (Bugün + 30 Gün)
+    // 4. İade Tarihini Hesapla (Bugün + 30 Gün)
     const returnDate = new Date();
     returnDate.setDate(returnDate.getDate() + 30);
 
-    // 3. Kaydı oluştur
+    // 5. Kaydı oluştur
     const loan = this.loanRepo.create({
       user: { id: userId } as User,
       book: { id: bookId } as Book,
       borrowDate: new Date(),
-      returnDate: returnDate, // Hesaplanan tarih
+      returnDate: returnDate, // Tahmini iade tarihi
     });
     
     return this.loanRepo.save(loan);
   }
 
-  // Kitap İade Et (Admin veya Sistem)
+  // Kitap İade Et
   async returnBook(loanId: number) {
     const loan = await this.loanRepo.findOne({ 
       where: { id: loanId },
@@ -70,8 +88,7 @@ export class LoansService {
       await this.bookRepo.save(loan.book);
     }
 
-    // 2. Ödünç kaydını sil (veya istersen 'status: returned' gibi bir sütun ekleyip güncelleyebilirsin)
-    // Şimdilik listeden kaldırıyoruz:
+    // 2. Ödünç kaydını sil
     return this.loanRepo.delete(loanId);
   }
 }
