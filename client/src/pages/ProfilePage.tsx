@@ -17,7 +17,6 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Mevcut avatarı seçili hale getir
     if (loggedInUser?.avatar) {
       setSelectedAvatar(loggedInUser.avatar);
     }
@@ -26,14 +25,12 @@ const ProfilePage = () => {
   const handleUpdate = () => {
     const updateData: any = {};
 
-    // Şifre kontrolü
     if (password) {
         if (password.length < 3) return toast.warning("Şifre en az 3 karakter olmalı.");
         if (password !== confirmPassword) return toast.warning("Şifreler uyuşmuyor.");
         updateData.password = password;
     }
 
-    // Avatar kontrolü (Değişiklik varsa gönder)
     if (selectedAvatar && selectedAvatar !== loggedInUser?.avatar) {
         updateData.avatar = selectedAvatar;
     }
@@ -46,15 +43,13 @@ const ProfilePage = () => {
 
     api.put("users/profile", updateData)
       .then(() => {
-        toast.success("Profiliniz güncellendi!");
+        toast.success("Profiliniz başarıyla güncellendi! ✨");
         setPassword("");
         setConfirmPassword("");
         
-        // Context ve Cookie güncelleme (Anlık değişim için)
         if (loggedInUser) {
             const updatedUser = { ...loggedInUser, ...updateData };
-            // backend'den tam user objesi dönüyor olabilir ama biz elimizdekini güncelleyelim
-            if(updateData.password) delete updatedUser.password; // şifreyi context'te tutmayız
+            if(updateData.password) delete updatedUser.password;
             
             setLoggedInUser(updatedUser);
             cookies.set("loggedInUser", JSON.stringify(updatedUser), { path: '/' });
@@ -66,83 +61,131 @@ const ProfilePage = () => {
       .finally(() => setLoading(false));
   };
 
+  if (!loggedInUser) return null;
+
   return (
-    <div className="container mx-auto p-4 flex justify-center mt-10">
-      <div className="bg-white w-full max-w-md rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         
-        {/* Üst Kısım: Profil Özeti */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-center">
-          <div className="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center mb-3 shadow-lg border-4 border-white overflow-hidden">
-             {/* Avatar varsa göster, yoksa baş harf */}
-             <img 
-               src={selectedAvatar || loggedInUser?.avatar || DEFAULT_AVATAR} 
-               alt="Avatar" 
-               className="w-full h-full object-cover"
-             />
-          </div>
-          <h2 className="text-white text-xl font-bold">{loggedInUser?.username}</h2>
-          <span className="text-purple-100 text-sm bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm">
-            {loggedInUser?.role === 'admin' ? 'Yönetici' : 'Üye'}
-          </span>
+        {/* 1. Üst Banner (Gradient) */}
+        <div className="h-48 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 relative">
+            <div className="absolute inset-0 bg-white/10 opacity-50 pattern-dots"></div>
         </div>
 
-        {/* Form Kısmı */}
-        <div className="p-6 space-y-4">
-          
-          {/* AVATAR DEĞİŞTİRME */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Avatarını Değiştir</label>
-            <div className="grid grid-cols-4 gap-2 justify-items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
-                {AVATAR_OPTIONS.map((avatar, idx) => (
-                    <img 
-                        key={idx}
-                        src={avatar}
-                        onClick={() => setSelectedAvatar(avatar)}
-                        className={`w-10 h-10 rounded-full cursor-pointer transition-transform hover:scale-110 border-2 ${selectedAvatar === avatar ? 'border-purple-600 scale-110 shadow' : 'border-transparent'}`}
-                    />
-                ))}
+        {/* 2. Profil Başlığı ve Avatar */}
+        <div className="relative px-8 pb-8">
+            <div className="flex flex-col md:flex-row items-center md:items-end -mt-16 mb-6 gap-6">
+                {/* Büyük Avatar */}
+                <div className="relative group">
+                    <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
+                        <img 
+                            src={selectedAvatar || loggedInUser.avatar || DEFAULT_AVATAR} 
+                            alt="Profil" 
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-green-500 w-5 h-5 rounded-full border-2 border-white shadow-sm" title="Çevrimiçi"></div>
+                </div>
+
+                {/* İsim ve Rol */}
+                <div className="text-center md:text-left flex-1 mb-2">
+                    <h1 className="text-3xl font-extrabold text-gray-800">{loggedInUser.username}</h1>
+                    <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${loggedInUser.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {loggedInUser.role === 'admin' ? '🛡️ Yönetici' : '📚 Kitap Kurdu'}
+                        </span>
+                        <span className="text-xs text-gray-400 font-medium">ID: #{loggedInUser.id}</span>
+                    </div>
+                </div>
+
+                {/* Kaydet Butonu (Masaüstü için sağda) */}
+                <div className="hidden md:block">
+                     <button 
+                        onClick={handleUpdate}
+                        disabled={loading}
+                        className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+                    </button>
+                </div>
             </div>
-          </div>
 
-          <hr className="border-gray-100" />
+            <hr className="border-gray-100 mb-8" />
 
-          <h3 className="text-gray-800 font-semibold">Şifre Değiştir (İsteğe Bağlı)</h3>
-          
-          <div>
-            <input 
-              type="password" 
-              className="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50 text-sm focus:border-purple-500 outline-none"
-              placeholder="Yeni Şifre"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            {/* 3. Ayarlar Grid Yapısı */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                
+                {/* Sol: Avatar Seçimi */}
+                <div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>🖼️</span> Avatar Seçimi
+                    </h3>
+                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
+                        <p className="text-sm text-gray-500 mb-4">Profilin için hazır avatarlardan birini seç.</p>
+                        <div className="grid grid-cols-4 gap-4 justify-items-center">
+                            {AVATAR_OPTIONS.map((avatar, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setSelectedAvatar(avatar)}
+                                    className={`relative w-14 h-14 rounded-full transition-all duration-300 transform hover:scale-110 focus:outline-none ${selectedAvatar === avatar ? 'ring-4 ring-purple-500 shadow-lg scale-110' : 'opacity-70 hover:opacity-100 hover:shadow'}`}
+                                >
+                                    <img src={avatar} alt="Avatar Option" className="w-full h-full object-cover rounded-full" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
 
-          <div>
-            <input 
-              type="password" 
-              className="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50 text-sm focus:border-purple-500 outline-none"
-              placeholder="Yeni Şifre (Tekrar)"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
+                {/* Sağ: Şifre Değiştirme */}
+                <div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>🔒</span> Güvenlik Ayarları
+                    </h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Yeni Şifre</label>
+                            <input 
+                                type="password" 
+                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Şifre Tekrar</label>
+                            <input 
+                                type="password" 
+                                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition"
+                                placeholder="••••••••"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                            * Şifreni değiştirmek istemiyorsan bu alanları boş bırakabilirsin.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Mobil için Kaydet Butonu */}
+            <div className="block md:hidden mt-8">
+                 <button 
+                    onClick={handleUpdate}
+                    disabled={loading}
+                    className="w-full bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50"
+                >
+                    {loading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+                </button>
+            </div>
 
-          <button 
-            onClick={handleUpdate}
-            disabled={loading}
-            className={`w-full text-white font-medium rounded-lg text-sm px-5 py-3 text-center transition-all shadow-md ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-            }`}
-          >
-            {loading ? 'Güncelleniyor...' : 'Profili Güncelle'}
-          </button>
-          
-          <div className="text-center mt-2">
-             <span onClick={() => navigate("/")} className="text-sm text-gray-500 hover:text-gray-800 cursor-pointer hover:underline">
-               ← Ana Sayfaya Dön
-             </span>
-          </div>
+            <div className="mt-8 text-center">
+                 <button onClick={() => navigate("/")} className="text-gray-400 hover:text-gray-600 font-medium text-sm transition-colors">
+                    Ana Sayfaya Dön
+                 </button>
+            </div>
+
         </div>
       </div>
     </div>

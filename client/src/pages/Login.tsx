@@ -13,71 +13,80 @@ const Login = () => {
   const navigate = useNavigate();
 
   function handleLogin(e: React.FormEvent) {
-    e.preventDefault(); // Sayfanın yenilenmesini engeller
+    e.preventDefault();
     api.post("auth/login", { username, password })
       .then((res) => {
         cookies.set("loggedInUser", JSON.stringify(res.data), { path: '/' });
         setLoggedInUser(res.data);
-        toast.success("Tekrar hoş geldiniz!");
+        toast.success(`Tekrar hoş geldin, ${res.data.username}! 👋`);
         navigate("/");
       })
-      .catch(() => toast.error("Giriş başarısız! Kullanıcı adı veya şifre yanlış."));
+      .catch(() => toast.error("Giriş başarısız! Bilgilerinizi kontrol edin."));
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gray-50 px-6 py-8 lg:py-0">
-      <div className="w-full bg-white rounded-lg shadow-lg md:mt-0 sm:max-w-md xl:p-0 border border-gray-200">
-        <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-          <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl text-center">
-            Hesabınıza Giriş Yapın
-          </h1>
-          <form className="space-y-4 md:space-y-6" onSubmit={handleLogin}>
-            <div>
-              <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900">
-                Kullanıcı Adı
-              </label>
-              <input
-                type="text"
-                id="username"
-                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 outline-none transition-colors"
-                placeholder="Örn: ahmet123"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900">
-                Şifre
-              </label>
-              <input
-                type="password"
-                id="password"
-                placeholder="••••••••"
-                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 outline-none transition-colors"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            
-            <button
-              type="submit"
-              className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-all shadow-md hover:shadow-lg"
+    <div className="flex min-h-[90vh] items-center justify-center bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400 p-4">
+      {/* Kart */}
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/20">
+        
+        {/* Başlık ve Logo */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg text-3xl">
+            📚
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">Giriş Yap</h2>
+          <p className="text-gray-500 text-sm mt-2">Kütüphanene erişmek için bilgilerini gir.</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          {/* Kullanıcı Adı */}
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </span>
+            <input
+              type="text"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-700"
+              placeholder="Kullanıcı Adı"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Şifre */}
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </span>
+            <input
+              type="password"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-400 text-gray-700"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transform transition hover:scale-[1.02] active:scale-95"
+          >
+            Giriş Yap
+          </button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 text-sm">
+            Hesabın yok mu?{" "}
+            <span
+              onClick={() => navigate("/register")}
+              className="text-blue-600 font-bold cursor-pointer hover:underline"
             >
-              Giriş Yap
-            </button>
-            
-            <p className="text-sm font-light text-gray-500 text-center">
-              Henüz bir hesabınız yok mu?{" "}
-              <span 
-                onClick={() => navigate("/register")}
-                className="font-medium text-blue-600 hover:underline cursor-pointer"
-              >
-                Kayıt Olun
-              </span>
-            </p>
-          </form>
+              Hemen Kayıt Ol
+            </span>
+          </p>
         </div>
       </div>
     </div>

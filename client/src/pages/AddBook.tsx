@@ -6,16 +6,13 @@ import { useNavigate } from "react-router-dom";
 const AddBook = () => {
   const navigate = useNavigate();
 
-  // Form Verileri
   const [title, setTitle] = useState("");
   const [pageCount, setPageCount] = useState("");
   const [stock, setStock] = useState("1");
   const [categoryId, setCategoryId] = useState<number>(0);
   const [authorName, setAuthorName] = useState("");
-  // YENİ: Resim URL State'i
   const [imageUrl, setImageUrl] = useState("");
 
-  // Kategori Modal State
   const [categories, setCategories] = useState([]);
   const [showCatModal, setShowCatModal] = useState(false);
   const [newCatName, setNewCatName] = useState("");
@@ -25,9 +22,7 @@ const AddBook = () => {
   }, []);
 
   const fetchCategories = () => {
-    api.get("categories")
-      .then(res => setCategories(res.data))
-      .catch(() => toast.error("Kategoriler yüklenemedi."));
+    api.get("categories").then(res => setCategories(res.data)).catch(() => toast.error("Kategoriler yüklenemedi."));
   };
 
   const handleAddCategory = () => {
@@ -53,110 +48,106 @@ const AddBook = () => {
       categoryId: Number(categoryId),
       authorName: authorName,
       stock: Number(stock),
-      imageUrl: imageUrl // <-- YENİ: Backend'e gönderiyoruz
+      imageUrl: imageUrl
     })
       .then(() => {
-        toast.success("Kitap başarıyla kaydedildi!");
+        toast.success("Kitap kütüphaneye eklendi! 📚");
         navigate("/");
       })
-      .catch((err) => {
-        toast.error("Hata: " + (err.response?.data?.message || "Başarısız."));
-      });
+      .catch((err) => toast.error("Hata: " + err.response?.data?.message));
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-lg bg-white rounded-lg shadow-md p-6 border border-gray-200">
-        <h2 className="text-2xl font-bold mb-6 text-center text-purple-700">Yeni Kitap Ekle</h2>
+    <div className="flex justify-center items-center min-h-[90vh] bg-gray-50 p-4">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        
+        <div className="text-center mb-8">
+           <h2 className="text-3xl font-extrabold text-gray-800">Yeni Kitap Ekle</h2>
+           <p className="text-gray-500 mt-2">Kütüphane koleksiyonunu genişlet.</p>
+        </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="space-y-5">
           {/* Kitap Adı */}
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-900">Kitap Adı *</label>
-            <input type="text" className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5" 
-                   value={title} onChange={(e) => setTitle(e.target.value)} />
+            <label className="block mb-2 text-sm font-bold text-gray-700">Kitap Adı</label>
+            <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition" 
+                   placeholder="Örn: Sefiller" value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+
+          {/* Yazar ve Kategori */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+             <div>
+                <label className="block mb-2 text-sm font-bold text-gray-700">Yazar Adı</label>
+                <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition" 
+                       placeholder="Örn: Victor Hugo" value={authorName} onChange={(e) => setAuthorName(e.target.value)} />
+             </div>
+             <div>
+                <div className="flex justify-between items-center mb-2">
+                   <label className="text-sm font-bold text-gray-700">Kategori</label>
+                   <button onClick={() => setShowCatModal(true)} className="text-xs text-purple-600 hover:underline font-bold">+ Yeni Ekle</button>
+                </div>
+                <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none cursor-pointer" 
+                        value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))}>
+                  <option value={0}>Kategori Seçiniz...</option>
+                  {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+             </div>
           </div>
 
           {/* Sayfa ve Stok */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             <div>
-                <label className="block mb-1 text-sm font-medium text-gray-900">Sayfa Sayısı *</label>
-                <input type="number" className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5" 
+                <label className="block mb-2 text-sm font-bold text-gray-700">Sayfa Sayısı</label>
+                <input type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" 
                        value={pageCount} onChange={(e) => setPageCount(e.target.value)} />
             </div>
             <div>
-                <label className="block mb-1 text-sm font-medium text-gray-900">Stok Adedi *</label>
-                <input type="number" className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5" 
+                <label className="block mb-2 text-sm font-bold text-gray-700">Stok Adedi</label>
+                <input type="number" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" 
                        value={stock} onChange={(e) => setStock(e.target.value)} />
             </div>
           </div>
 
-          {/* Kategori Seçimi */}
+          {/* Resim URL */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-900">Kategori *</label>
-              <button onClick={() => setShowCatModal(true)} className="text-xs text-blue-600 hover:underline font-bold">+ Yeni Kategori</button>
-            </div>
-            <select className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5" 
-                    value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))}>
-              <option value={0}>Seçiniz...</option>
-              {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-
-          {/* Yazar Adı */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-900">Yazar Adı *</label>
-            <input type="text" className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5" 
-                   value={authorName} onChange={(e) => setAuthorName(e.target.value)} />
-          </div>
-
-          {/* --- YENİ EKLENEN KISIM: RESİM URL --- */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-900">Kapak Resmi URL (İsteğe Bağlı)</label>
+            <label className="block mb-2 text-sm font-bold text-gray-700">Kapak Resmi URL <span className="text-gray-400 font-normal">(İsteğe Bağlı)</span></label>
             <input 
                 type="url" 
-                className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5" 
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" 
                 placeholder="https://..."
                 value={imageUrl} 
                 onChange={(e) => setImageUrl(e.target.value)} 
             />
-            <p className="text-xs text-gray-500 mt-1">Google'dan görsel bağlantısını kopyalayıp yapıştırın.</p>
           </div>
 
-          {/* Resim Önizleme (URL girildiyse görünür) */}
+          {/* Önizleme */}
           {imageUrl && (
-            <div className="flex justify-center mt-2 p-2 border border-dashed border-gray-300 rounded bg-gray-50">
-                <div className="text-center">
-                    <p className="text-xs text-gray-400 mb-1">Önizleme</p>
-                    <img 
-                        src={imageUrl} 
-                        alt="Önizleme" 
-                        className="h-32 w-auto object-cover rounded shadow-sm mx-auto"
-                        onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} 
-                    />
+            <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <img src={imageUrl} alt="Önizleme" className="h-20 w-14 object-cover rounded shadow-md" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                <div>
+                    <p className="text-sm font-bold text-purple-800">Görsel Önizlemesi</p>
+                    <p className="text-xs text-purple-600">Kitap kapağı bu şekilde görünecek.</p>
                 </div>
             </div>
           )}
-          {/* ------------------------------------- */}
 
-          <div className="flex gap-2 mt-4">
-            <button onClick={handleSubmit} className="text-white bg-purple-700 hover:bg-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 flex-1">Kaydet</button>
-            <button onClick={() => navigate("/")} className="text-gray-900 bg-white border border-gray-300 font-medium rounded-lg text-sm px-5 py-2.5">İptal</button>
+          <div className="flex gap-3 pt-4">
+            <button onClick={handleSubmit} className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg transform transition hover:scale-[1.02]">Kaydet</button>
+            <button onClick={() => navigate("/")} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-xl transition">İptal</button>
           </div>
         </div>
       </div>
 
       {/* Kategori Modal */}
       {showCatModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6">
-            <h3 className="text-lg font-bold mb-4">Hızlı Kategori Ekle</h3>
-            <input type="text" className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-full p-2.5 mb-4" 
-                   value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Örn: Bilim" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Hızlı Kategori Ekle</h3>
+            <input type="text" className="w-full p-3 border border-gray-300 rounded-xl mb-4 focus:ring-2 focus:ring-purple-500 outline-none" 
+                   value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Örn: Bilim Kurgu" />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowCatModal(false)} className="px-4 py-2 border rounded text-sm">İptal</button>
-              <button onClick={handleAddCategory} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Ekle</button>
+              <button onClick={() => setShowCatModal(false)} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium">Vazgeç</button>
+              <button onClick={handleAddCategory} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">Ekle</button>
             </div>
           </div>
         </div>

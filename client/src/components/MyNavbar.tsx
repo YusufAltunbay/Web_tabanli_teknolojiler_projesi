@@ -1,7 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLoggedInUsersContext } from "../context/LoggedInUserContext";
 import Cookies from "universal-cookie";
-// YENİ: Varsayılan avatar importu
 import { DEFAULT_AVATAR } from "../helper/avatarData";
 
 const MyNavbar = () => {
@@ -18,90 +17,89 @@ const MyNavbar = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path 
-      ? "text-blue-700 font-bold" 
-      : "text-gray-700 hover:text-blue-700";
+      ? "bg-purple-100 text-purple-700 font-bold shadow-sm" // Aktif buton stili
+      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"; // Pasif buton stili
   };
 
   return (
-    <nav className="bg-white border-gray-200 px-4 py-3 rounded-b-lg shadow-md mb-6">
-      <div className="container flex flex-wrap justify-between items-center mx-auto">
+    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3 shadow-sm transition-all duration-300">
+      <div className="container flex flex-wrap justify-between items-center mx-auto max-w-7xl">
         
-        {/* SOL: Logo */}
-        <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
-          <span className="self-center text-xl font-semibold whitespace-nowrap text-purple-700">
-            📚 Kütüphane Yönetim Sistemi
+        {/* SOL: Logo (Gradient Efektli) */}
+        <div className="flex items-center cursor-pointer group" onClick={() => navigate("/")}>
+          <span className="text-3xl mr-2 transform group-hover:scale-110 transition-transform duration-300">📚</span>
+          <span className="self-center text-xl font-extrabold whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-500">
+            Kütüphanem
           </span>
         </div>
 
-        {/* SAĞ: Kullanıcı ve Çıkış */}
-        <div className="flex items-center md:order-2 gap-3">
-          {loggedInUser ? (
-            <>
-              {/* YENİ: Avatar ve İsim Alanı */}
-              <div 
-                className="hidden md:flex items-center mr-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-lg transition"
-                onClick={() => navigate("/profile")}
-                title="Profil Ayarları"
-              >
-                <img 
-                  className="w-9 h-9 rounded-full border border-gray-300 object-cover mr-2" 
-                  src={loggedInUser.avatar || DEFAULT_AVATAR} 
-                  alt="Avatar"
-                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
-                />
-                <div className="text-sm font-medium text-gray-600 leading-tight">
-                  <div>Hoş geldin, <span className="text-black font-bold">{loggedInUser.username}</span></div>
-                  <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 border border-gray-200">
-                    {loggedInUser.role === 'admin' ? 'YÖNETİCİ' : 'ÜYE'}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2"
-              >
-                Çıkış
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => navigate("/login")} className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2">
-                Giriş Yap
-              </button>
-              <button onClick={() => navigate("/register")} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2">
-                Kayıt Ol
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* ORTA: Linkler */}
-        <div className="hidden w-full md:block md:w-auto md:order-1">
-          <ul className="flex flex-col mt-4 md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium items-center">
-            
-            <li>
-              <button onClick={() => navigate("/")} className={`block py-2 pr-4 pl-3 ${isActive("/")}`}>
+        {/* ORTA: Linkler (Desktop) */}
+        <div className="hidden md:flex items-center space-x-1">
+            <button onClick={() => navigate("/")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/")}`}>
                 Ana Sayfa
-              </button>
-            </li>
+            </button>
             
             {loggedInUser?.role === 'admin' && (
               <>
-                <li><button onClick={() => navigate("/add-book")} className={`block py-2 pr-4 pl-3 ${isActive("/add-book")}`}>+ Kitap Ekle</button></li>
-                <li><button onClick={() => navigate("/admin-loans")} className={`block py-2 pr-4 pl-3 ${isActive("/admin-loans")}`}>📋 Ödünç Takip</button></li>
-                <li><button onClick={() => navigate("/users")} className={`block py-2 pr-4 pl-3 ${isActive("/users")}`}>👥 Kullanıcılar</button></li>
+                <button onClick={() => navigate("/add-book")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/add-book")}`}>+ Kitap Ekle</button>
+                <button onClick={() => navigate("/admin-loans")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/admin-loans")}`}>📋 Ödünç Takip</button>
+                <button onClick={() => navigate("/users")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/users")}`}>👥 Kullanıcılar</button>
               </>
             )}
 
             {loggedInUser && loggedInUser.role !== 'admin' && (
               <>
-                <li><button onClick={() => navigate("/my-loans")} className={`block py-2 pr-4 pl-3 ${isActive("/my-loans")}`}>📖 Kitaplarım</button></li>
-                <li><button onClick={() => navigate("/favorites")} className={`block py-2 pr-4 pl-3 ${isActive("/favorites")}`}>❤️ Favorilerim</button></li>
+                <button onClick={() => navigate("/my-loans")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/my-loans")}`}>📖 Kitaplarım</button>
+                <button onClick={() => navigate("/favorites")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/favorites")}`}>❤️ Favorilerim</button>
               </>
             )}
-          </ul>
         </div>
+
+        {/* SAĞ: Kullanıcı ve Çıkış */}
+        <div className="flex items-center gap-3">
+          {loggedInUser ? (
+            <div className="flex items-center gap-3 pl-2">
+              {/* Profil Alanı (Hap Şeklinde) */}
+              <div 
+                className="hidden md:flex items-center gap-3 pr-4 pl-1 py-1 rounded-full border border-gray-200 bg-white hover:shadow-md cursor-pointer transition-all duration-200 group"
+                onClick={() => navigate("/profile")}
+                title="Profil Ayarları"
+              >
+                <img 
+                  className="w-8 h-8 rounded-full object-cover border border-purple-200 group-hover:scale-105 transition-transform" 
+                  src={loggedInUser.avatar || DEFAULT_AVATAR} 
+                  alt="Avatar"
+                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                />
+                <div className="flex flex-col">
+                    <span className="text-xs font-bold text-gray-700 leading-none">{loggedInUser.username}</span>
+                    <span className="text-[9px] font-bold text-purple-500 uppercase tracking-wider leading-none mt-0.5">
+                        {loggedInUser.role === 'admin' ? 'Yönetici' : 'Üye'}
+                    </span>
+                </div>
+              </div>
+
+              {/* Çıkış Butonu (Mobil için ikonlu) */}
+              <button
+                onClick={handleLogout}
+                className="bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 p-2 rounded-full transition-colors"
+                title="Çıkış Yap"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button onClick={() => navigate("/login")} className="text-gray-600 hover:text-purple-600 font-medium text-sm transition-colors">
+                Giriş Yap
+              </button>
+              <button onClick={() => navigate("/register")} className="bg-purple-600 text-white hover:bg-purple-700 font-medium rounded-full text-sm px-5 py-2 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                Kayıt Ol
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
     </nav>
   );
