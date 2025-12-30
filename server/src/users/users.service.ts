@@ -16,13 +16,13 @@ export class UsersService {
     return this.userRepository.findOne({ where: { username } });
   }
 
-  // 2. Kullanıcı Oluştur (DÜZELTME BURADA)
-  async create(username: string, pass: string, role: string): Promise<User> {
+  // 2. Kullanıcı Oluştur (GÜNCELLENDİ: Avatar eklendi)
+  async create(username: string, pass: string, role: string, avatar?: string): Promise<User> {
     const newUser = this.userRepository.create({
       username,
       password: pass,
-      // Gelen string'i UserRole tipine zorluyoruz
-      role: role as UserRole, 
+      role: role as UserRole,
+      avatar: avatar || null, // Avatar varsa kaydet, yoksa null
     });
     return this.userRepository.save(newUser);
   }
@@ -37,21 +37,28 @@ export class UsersService {
     return this.userRepository.delete(id);
   }
 
-  // 5. Profil Güncelle
-  async updateProfile(userId: number, password?: string) {
+  // 5. Profil Güncelle (GÜNCELLENDİ: Avatar ve Şifre)
+  async updateProfile(userId: number, updateData: { password?: string; avatar?: string }) {
     const user = await this.userRepository.findOneBy({ id: userId });
     
     if (!user) {
         throw new NotFoundException("Kullanıcı bulunamadı.");
     }
 
-    if (password) {
+    // Şifre varsa güncelle
+    if (updateData.password) {
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      user.password = await bcrypt.hash(updateData.password, salt);
+    }
+
+    // Avatar varsa güncelle
+    if (updateData.avatar) {
+      user.avatar = updateData.avatar;
     }
     
     return this.userRepository.save(user);
   }
+
   async updateRole(id: number, role: UserRole) {
     return this.userRepository.update(id, { role });
   }

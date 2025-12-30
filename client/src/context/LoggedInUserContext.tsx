@@ -6,6 +6,7 @@ export type LoggedInUser = {
   username: string;
   role: string;
   accessToken: string;
+  avatar?: string; // YENİ: Avatar alanı eklendi
 };
 
 export type LoggedInUserContextType = {

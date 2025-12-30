@@ -26,17 +26,20 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
       id: user.id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      avatar: user.avatar // GÜNCELLENDİ: Avatarı da gönderiyoruz
     };
   }
 
-  // DÜZELTME BURADA: register fonksiyonunu tanımladık ve 3 parametreyi gönderdik
   async register(userDto: any) {
-    // Şifreyi hashle
     const hashedPassword = await bcrypt.hash(userDto.password, 10);
     
-    // Servise: username, hashed password, VE ROLE bilgisini gönderiyoruz
-    // Eğer role gelmezse varsayılan 'member' olsun
-    return this.usersService.create(userDto.username, hashedPassword, userDto.role || 'member');
+    // GÜNCELLENDİ: Avatarı da servise gönderiyoruz
+    return this.usersService.create(
+      userDto.username, 
+      hashedPassword, 
+      userDto.role || 'member',
+      userDto.avatar // <-- Yeni
+    );
   }
 }

@@ -26,11 +26,15 @@ export class UsersController {
   }
 
   // Herkes: Kendi şifresini güncelle
-  @Put('profile')
-  @UseGuards(AuthGuard('jwt'))
-  updateProfile(@Request() req, @Body('password') password: string) {
-    return this.usersService.updateProfile(req.user.userId, password);
-  }
+ @Put('profile')
+@UseGuards(AuthGuard('jwt'))
+updateProfile(@Request() req, @Body() body: any) { // Body'yi komple alıyoruz
+  // password ve avatar'ı ayıklayıp servise yolluyoruz
+  return this.usersService.updateProfile(req.user.userId, { 
+    password: body.password, 
+    avatar: body.avatar 
+  });
+}
 
   // --- YENİ EKLENEN: ROL DEĞİŞTİRME (Sadece Admin) ---
   @Put(':id/role')

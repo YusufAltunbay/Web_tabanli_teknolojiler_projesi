@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { api } from "../helper/api";
 import { toast } from "sonner";
-// YENİ: Giriş yapan kullanıcıyı tanımak için context'i ekledik
 import { useLoggedInUsersContext } from "../context/LoggedInUserContext";
+// YENİ: Varsayılan avatar importu
+import { DEFAULT_AVATAR } from "../helper/avatarData";
 
 type User = {
   id: number;
   username: string;
   role: string;
+  avatar?: string; // YENİ: Avatar eklendi
 };
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
-  // YENİ: Şu anki adminin bilgisini alıyoruz
   const { loggedInUser } = useLoggedInUsersContext();
 
   useEffect(() => {
@@ -26,8 +27,6 @@ const UsersPage = () => {
   };
 
   const handleRoleChange = (id: number, currentRole: string) => {
-    // KENDİNİ YAKMA KORUMASI:
-    // Eğer işlem yapılan ID, giriş yapmış kullanıcının ID'sine eşitse durdur.
     if (loggedInUser && loggedInUser.id === id) {
         toast.warning("Kendi yetkinizi düşüremezsiniz! Başka bir yönetici bunu yapabilir.");
         return;
@@ -51,7 +50,6 @@ const UsersPage = () => {
   };
 
   const handleDeleteUser = (id: number) => {
-    // Ekstra Güvenlik: Admin kendini silemesin
     if (loggedInUser && loggedInUser.id === id) {
         toast.error("Kendinizi silemezsiniz!");
         return;
@@ -77,6 +75,7 @@ const UsersPage = () => {
         <table className="w-full text-sm text-left text-gray-500">
           <thead className="text-xs text-gray-700 uppercase bg-gray-100">
             <tr>
+              <th scope="col" className="px-6 py-3">Avatar</th> {/* YENİ: Avatar Sütunu */}
               <th scope="col" className="px-6 py-3">ID</th>
               <th scope="col" className="px-6 py-3">Kullanıcı Adı</th>
               <th scope="col" className="px-6 py-3">Rol</th>
@@ -86,6 +85,17 @@ const UsersPage = () => {
           <tbody>
             {users.map((user) => (
               <tr key={user.id} className="bg-white border-b hover:bg-gray-50 transition">
+                
+                {/* YENİ: Avatar Gösterimi */}
+                <td className="px-6 py-4">
+                   <img 
+                      src={user.avatar || DEFAULT_AVATAR} 
+                      alt={user.username} 
+                      className="w-10 h-10 rounded-full border border-gray-200 object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                   />
+                </td>
+
                 <td className="px-6 py-4 font-medium text-gray-900">{user.id}</td>
                 <td className="px-6 py-4 font-semibold">{user.username}</td>
                 <td className="px-6 py-4">
@@ -98,11 +108,10 @@ const UsersPage = () => {
                 <td className="px-6 py-4 text-right flex justify-end gap-3">
                   <button
                     onClick={() => handleRoleChange(user.id, user.role)}
-                    // Kendi satırıysa butonu pasif ve gri yap (Görsel ipucu)
                     disabled={loggedInUser?.id === user.id}
                     className={`font-medium text-xs px-3 py-1.5 rounded border transition ${
                         loggedInUser?.id === user.id
-                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' // Pasif Stil
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                         : user.role === 'admin' 
                             ? 'text-orange-600 border-orange-200 hover:bg-orange-50' 
                             : 'text-blue-600 border-blue-200 hover:bg-blue-50'
@@ -127,7 +136,7 @@ const UsersPage = () => {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={4} className="text-center py-8 text-gray-400 text-lg">
+                <td colSpan={5} className="text-center py-8 text-gray-400 text-lg">
                     Kayıtlı kullanıcı bulunamadı.
                 </td>
               </tr>

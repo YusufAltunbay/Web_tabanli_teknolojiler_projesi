@@ -1,6 +1,8 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLoggedInUsersContext } from "../context/LoggedInUserContext";
 import Cookies from "universal-cookie";
+// YENİ: Varsayılan avatar importu
+import { DEFAULT_AVATAR } from "../helper/avatarData";
 
 const MyNavbar = () => {
   const navigate = useNavigate();
@@ -14,13 +16,11 @@ const MyNavbar = () => {
     navigate("/login");
   };
 
-  // --- HATA BURADAYDI: Bu fonksiyonun burada tanımlı olması şart ---
   const isActive = (path: string) => {
     return location.pathname === path 
       ? "text-blue-700 font-bold" 
       : "text-gray-700 hover:text-blue-700";
   };
-  // ----------------------------------------------------------------
 
   return (
     <nav className="bg-white border-gray-200 px-4 py-3 rounded-b-lg shadow-md mb-6">
@@ -37,19 +37,26 @@ const MyNavbar = () => {
         <div className="flex items-center md:order-2 gap-3">
           {loggedInUser ? (
             <>
-              <div className="hidden md:block text-sm font-medium text-gray-600 mr-2">
-                Hoş geldin, 
-                <span 
-                  onClick={() => navigate("/profile")} 
-                  className="text-black font-bold cursor-pointer hover:text-purple-600 hover:underline ml-1"
-                  title="Profil Ayarları"
-                >
-                  {loggedInUser.username}
-                </span> 
-                <span className="text-xs ml-1 px-2 py-0.5 rounded bg-gray-100 border text-gray-500">
-                  {loggedInUser.role === 'admin' ? 'YÖNETİCİ' : 'ÜYE'}
-                </span>
+              {/* YENİ: Avatar ve İsim Alanı */}
+              <div 
+                className="hidden md:flex items-center mr-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-lg transition"
+                onClick={() => navigate("/profile")}
+                title="Profil Ayarları"
+              >
+                <img 
+                  className="w-9 h-9 rounded-full border border-gray-300 object-cover mr-2" 
+                  src={loggedInUser.avatar || DEFAULT_AVATAR} 
+                  alt="Avatar"
+                  onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                />
+                <div className="text-sm font-medium text-gray-600 leading-tight">
+                  <div>Hoş geldin, <span className="text-black font-bold">{loggedInUser.username}</span></div>
+                  <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 border border-gray-200">
+                    {loggedInUser.role === 'admin' ? 'YÖNETİCİ' : 'ÜYE'}
+                  </span>
+                </div>
               </div>
+
               <button
                 onClick={handleLogout}
                 className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2"

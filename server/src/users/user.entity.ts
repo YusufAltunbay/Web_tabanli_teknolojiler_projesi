@@ -19,8 +19,11 @@ export class User {
   @Column()
   password: string;
 
+ @Column({ type: 'text', nullable: true }) 
+  avatar: string | null;
+
   @Column({
-    type: 'simple-enum', // SQLite uyumlu hale getirdik
+    type: 'simple-enum',
     enum: UserRole,
     default: UserRole.MEMBER,
   })
