@@ -17,29 +17,35 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      // 3 farklı yerden veriyi aynı anda çekiyoruz
       const [booksRes, usersRes, loansRes] = await Promise.all([
         api.get("books"),
         api.get("users"),
         api.get("loans")
       ]);
 
-      const books = booksRes.data;
-      const users = usersRes.data;
-      const loans = loansRes.data;
+      // Veriler null gelirse boş dizi kabul et
+      const books = booksRes.data || [];
+      const users = usersRes.data || [];
+      const loans = loansRes.data || [];
 
-      // Hesaplamalar
+      // --- HESAPLAMALAR ---
+      
       const totalBooks = books.length;
-      // Toplam stok miktarını hesapla (tüm kitapların stoklarını topla)
-      const totalStock = books.reduce((acc: number, book: any) => acc + book.stock, 0);
+      
+      // Stok hesaplama
+      const totalStock = books.reduce((acc: number, book: any) => acc + (book.stock || 0), 0);
+      
       const totalUsers = users.length;
-      // Sadece iade tarihi OLMAYAN (hala okunuyor olan) kitapları say
-      const activeLoans = loans.filter((loan: any) => !loan.returnDate).length;
+      
+      // DÜZELTME BURADA: Filtreyi kaldırdık. 
+      // Gelen loans listesi zaten ödünç alınanları içeriyor. Direkt sayısını alıyoruz.
+      const activeLoans = Array.isArray(loans) ? loans.length : 0;
 
       setStats({ totalBooks, totalUsers, activeLoans, totalStock });
       setLoading(false);
+
     } catch (error) {
-      console.error("İstatistik hatası", error);
+      console.error("İstatistik hatası:", error);
       setLoading(false);
     }
   };

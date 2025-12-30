@@ -3,7 +3,7 @@ import { api } from "../helper/api";
 import { useLoggedInUsersContext } from "../context/LoggedInUserContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-// YENİ: Dashboard bileşenini çağırıyoruz
+// Dashboard bileşeni
 import AdminDashboard from "../components/AdminDashboard";
 
 type Author = { id: number; name: string };
@@ -77,11 +77,19 @@ const BooksPage = () => {
       .catch(() => console.error("Kategoriler alınamadı"));
   };
 
+  // DÜZELTME: Hata yakalama (catch) eklendi.
   const fetchMyFavorites = () => {
-    api.get("favorites").then((res) => {
-        const ids = res.data.map((fav: any) => fav.book.id);
-        setFavoriteBookIds(ids);
-    });
+    api.get("favorites")
+       .then((res) => {
+           if (res.data) {
+               const ids = res.data.map((fav: any) => fav.book.id);
+               setFavoriteBookIds(ids);
+           }
+       })
+       .catch((err) => {
+           console.log("Favoriler çekilemedi:", err);
+           setFavoriteBookIds([]); // Hata olursa listeyi boşalt, patlatma
+       });
   };
 
   const toggleFavorite = (bookId: number) => {
@@ -223,7 +231,7 @@ const BooksPage = () => {
         {filteredBooks.map((book) => (
           <div key={book.id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden flex flex-col hover:shadow-xl transition-shadow h-full">
             
-            {/* RESİM ALANI */}
+            {/* RESİM ALANI (NETFLIX TARZI KORUNDU) */}
             <div className="h-[400px] bg-gray-200 relative group overflow-hidden">
                 <img 
                     src={book.imageUrl || PLACEHOLDER_IMAGE} 
