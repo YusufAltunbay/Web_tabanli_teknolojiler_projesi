@@ -25,11 +25,18 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  // EKSİK OLAN KISIM BURASIYDI:
-  // Herkes: Kendi şifresini güncelle (PUT /users/profile)
+  // Herkes: Kendi şifresini güncelle
   @Put('profile')
   @UseGuards(AuthGuard('jwt'))
   updateProfile(@Request() req, @Body('password') password: string) {
     return this.usersService.updateProfile(req.user.userId, password);
+  }
+
+  // --- YENİ EKLENEN: ROL DEĞİŞTİRME (Sadece Admin) ---
+  @Put(':id/role')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN)
+  changeRole(@Param('id') id: number, @Body('role') role: UserRole) {
+    return this.usersService.updateRole(id, role);
   }
 }

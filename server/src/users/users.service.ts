@@ -52,4 +52,7 @@ export class UsersService {
     
     return this.userRepository.save(user);
   }
+  async updateRole(id: number, role: UserRole) {
+    return this.userRepository.update(id, { role });
+  }
 }
