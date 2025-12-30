@@ -19,6 +19,9 @@ export class Book {
   @Column({ default: 1 }) // Yeni eklenen stok sütunu
   stock: number;
 
+  @Column({ nullable: true }) // Boş bırakılabilir (eski kitaplar için)
+  imageUrl: string;
+
   // İlişki: Bir kitabın bir kategorisi olur
   @ManyToOne(() => Category, (category) => category.books)
   category: Category;

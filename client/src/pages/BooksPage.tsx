@@ -12,9 +12,13 @@ type Book = {
   title: string;
   pageCount: number;
   stock: number;
+  imageUrl?: string;
   category: Category;
   authors: Author[];
 };
+
+// Resim yoksa gösterilecek varsayılan görsel (Daha hızlı ve güvenilir servis)
+const PLACEHOLDER_IMAGE = "https://placehold.co/300x450?text=Resim+Yok";
 
 const BooksPage = () => {
   const { loggedInUser } = useLoggedInUsersContext();
@@ -24,7 +28,7 @@ const BooksPage = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // YENİ EKLENDİ: Favori kitapların ID'lerini tutan liste
+  // Favori kitapların ID'lerini tutan liste
   const [favoriteBookIds, setFavoriteBookIds] = useState<number[]>([]);
 
   // Filtreleme State'leri
@@ -32,9 +36,9 @@ const BooksPage = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
 
   // Modallar
-  const [showAddModal, setShowAddModal] = useState(false); // Yorum Ekle Modalı
-  const [showReadModal, setShowReadModal] = useState(false); // Yorum Oku Modalı
-  const [showEditModal, setShowEditModal] = useState(false); // Kitap Düzenle Modalı
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showReadModal, setShowReadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Seçili Veriler
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
@@ -49,11 +53,11 @@ const BooksPage = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editPageCount, setEditPageCount] = useState("");
   const [editStock, setEditStock] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
 
   useEffect(() => {
     fetchBooks();
     fetchCategories();
-    // YENİ EKLENDİ: Eğer kullanıcı giriş yapmışsa favorilerini çek
     if (loggedInUser) {
         fetchMyFavorites();
     }
@@ -71,41 +75,35 @@ const BooksPage = () => {
       .catch(() => console.error("Kategoriler alınamadı"));
   };
 
-  // YENİ EKLENDİ: Kullanıcının favorilerini çekip ID listesi yapıyoruz
   const fetchMyFavorites = () => {
     api.get("favorites").then((res) => {
-        // Gelen veri: [{id: 1, book: {id: 5, ...}}, ...] şeklindedir.
         const ids = res.data.map((fav: any) => fav.book.id);
         setFavoriteBookIds(ids);
     });
   };
 
-  // YENİ EKLENDİ: Kalbe basınca çalışan akıllı fonksiyon
   const toggleFavorite = (bookId: number) => {
     if (!loggedInUser) return toast.warning("Lütfen giriş yapın.");
 
     const isFavorited = favoriteBookIds.includes(bookId);
 
     if (isFavorited) {
-        // Zaten favoride -> ÇIKAR (DELETE)
         api.delete(`favorites/${bookId}`)
            .then(() => {
                toast.info("Favorilerden çıkarıldı.");
-               setFavoriteBookIds(prev => prev.filter(id => id !== bookId)); // State'ten sil
+               setFavoriteBookIds(prev => prev.filter(id => id !== bookId));
            })
            .catch(() => toast.error("İşlem başarısız."));
     } else {
-        // Favoride değil -> EKLE (POST)
         api.post("favorites", { bookId })
            .then(() => {
                toast.success("Favorilere eklendi! ❤️");
-               setFavoriteBookIds(prev => [...prev, bookId]); // State'e ekle
+               setFavoriteBookIds(prev => [...prev, bookId]);
            })
            .catch(() => toast.error("İşlem başarısız."));
     }
   };
 
-  // --- FİLTRELEME MANTIĞI ---
   const filteredBooks = books.filter((book) => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategoryId === 0 || book.category?.id === selectedCategoryId;
@@ -114,7 +112,6 @@ const BooksPage = () => {
 
   // --- İŞLEMLER ---
 
-  // Ödünç Al
   const handleBorrow = (bookId: number) => {
     if (!loggedInUser) return toast.warning("Lütfen giriş yapın.");
     api.post("loans", { bookId })
@@ -122,7 +119,6 @@ const BooksPage = () => {
       .catch((err) => toast.error(err.response?.data?.message || "Hata oluştu"));
   };
 
-  // Kitap Sil (Admin)
   const handleDeleteBook = (id: number) => {
     if(!confirm("Silmek istediğinize emin misiniz?")) return;
     api.delete(`books/${id}`)
@@ -130,22 +126,22 @@ const BooksPage = () => {
       .catch((err) => toast.error("Silinemedi: " + err.response?.data?.message));
   };
 
-  // Düzenleme Modalını Aç
   const handleOpenEdit = (book: Book) => {
     setSelectedBookId(book.id);
     setEditTitle(book.title);
     setEditPageCount(String(book.pageCount));
     setEditStock(String(book.stock));
+    setEditImageUrl(book.imageUrl || ""); 
     setShowEditModal(true);
   };
 
-  // Kitap Güncelle
   const handleUpdateBook = () => {
     if (!selectedBookId) return;
     api.put(`books/${selectedBookId}`, {
       title: editTitle,
       pageCount: Number(editPageCount),
-      stock: Number(editStock)
+      stock: Number(editStock),
+      imageUrl: editImageUrl 
     })
     .then(() => {
       toast.success("Kitap güncellendi!");
@@ -155,20 +151,14 @@ const BooksPage = () => {
     .catch((err) => toast.error("Güncelleme başarısız."));
   };
 
-  // Yorumları Oku Modalını Aç
   const handleOpenReadModal = (bookId: number, title: string) => {
     setSelectedBookTitle(title);
     api.get(`reviews/book/${bookId}`).then((res) => { setBookReviews(res.data); setShowReadModal(true); });
   };
   
-  // Yorum Gönder
   const handleSubmitReview = () => {
     if (!selectedBookId) return;
-    
-    if (!comment.trim()) {
-        toast.warning("Lütfen yorum yazın.");
-        return;
-    }
+    if (!comment.trim()) { toast.warning("Lütfen yorum yazın."); return; }
 
     api.post("reviews", { bookId: selectedBookId, comment, rating: Number(rating) })
       .then(() => { 
@@ -180,7 +170,6 @@ const BooksPage = () => {
       .catch((err) => toast.error("Hata: " + err.response?.data?.message));
   };
 
-  // Yorum Sil (Admin)
   const handleDeleteReview = (id: number) => {
     api.delete(`reviews/${id}`).then(() => { setBookReviews(prev => prev.filter(r => r.id !== id)); toast.success("Yorum silindi"); });
   };
@@ -188,7 +177,7 @@ const BooksPage = () => {
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       
-      {/* Arama ve Filtreleme Alanı */}
+      {/* Arama ve Filtreleme */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-1/2">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -222,33 +211,55 @@ const BooksPage = () => {
       </div>
 
       {/* Kitap Listesi */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredBooks.map((book) => (
-          <div key={book.id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden flex flex-col hover:shadow-xl transition-shadow">
-            <div className="p-5 flex-grow">
-              <div className="flex justify-between items-start mb-2">
-                <h5 className="text-xl font-bold tracking-tight text-gray-900 line-clamp-1">{book.title}</h5>
-                <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">{book.category?.name}</span>
-              </div>
-              <p className="text-gray-600 text-sm">Sayfa: {book.pageCount}</p>
-              <p className="text-sm mb-3">
-                Stok: <span className={`font-bold ${book.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                   {book.stock > 0 ? `${book.stock} adet` : 'Tükendi'}
-                </span>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {book.authors?.map((auth) => (
-                  <span key={auth.id} className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-300">✍️ {auth.name}</span>
-                ))}
+          <div key={book.id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden flex flex-col hover:shadow-xl transition-shadow h-full">
+            
+            {/* --- RESİM ALANI (NETFLIX TARZI: UZUN VE TAM OTURAN) --- */}
+            <div className="h-[400px] bg-gray-200 relative group overflow-hidden">
+                <img 
+                    src={book.imageUrl || PLACEHOLDER_IMAGE} 
+                    alt={book.title} 
+                    // GÜNCELLENDİ: object-top ile resmin üst kısmını koruyoruz
+                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                    
+                    onError={(e) => { 
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Sonsuz döngü kırıcı
+                        target.src = PLACEHOLDER_IMAGE; 
+                    }}
+                />
+                <div className={`absolute top-3 right-3 px-3 py-1 text-xs font-bold rounded-full shadow-md ${book.stock > 0 ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                    {book.stock > 0 ? `${book.stock} Stok` : 'Tükendi'}
+                </div>
+            </div>
+            {/* --------------------------------------------------- */}
+
+            {/* İçerik Alanı */}
+            <div className="p-4 flex-grow flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                    <h5 className="text-lg font-bold text-gray-900 line-clamp-2 h-14" title={book.title}>{book.title}</h5>
+                </div>
+                <div className="mb-3">
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">{book.category?.name}</span>
+                </div>
+                <p className="text-gray-600 text-sm mb-1">📄 {book.pageCount} Sayfa</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                    {book.authors?.map((auth) => (
+                    <span key={auth.id} className="text-gray-700 text-xs italic">✍️ {auth.name}</span>
+                    ))}
+                </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex flex-col gap-2">
-              <button onClick={() => handleOpenReadModal(book.id, book.title)} className="text-gray-600 hover:text-blue-600 text-sm font-medium w-full text-left">
+            {/* Butonlar Alanı */}
+            <div className="bg-gray-50 px-4 py-3 border-t border-gray-100 flex flex-col gap-2">
+              <button onClick={() => handleOpenReadModal(book.id, book.title)} className="text-gray-600 hover:text-blue-600 text-sm font-medium w-full text-center border-b pb-2">
                 💬 Yorumları Gör
               </button>
 
-              <div className="flex gap-2 mt-1">
+              <div className="flex gap-2 mt-1 justify-center">
                 {loggedInUser?.role === 'admin' ? (
                   <>
                     <button onClick={() => handleOpenEdit(book)} className="flex-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium py-1.5 px-3 rounded text-sm transition">
@@ -275,19 +286,17 @@ const BooksPage = () => {
                         ⭐ Puanla
                     </button>
 
-                    {/* --- GÜNCELLENEN KALP BUTONU --- */}
                     <button 
                         onClick={() => toggleFavorite(book.id)}
                         className={`py-1.5 px-3 rounded text-lg transition border ${
                             favoriteBookIds.includes(book.id) 
-                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' // KALP KIRMIZI
-                                : 'bg-white text-gray-400 border-gray-300 hover:text-red-500 hover:border-red-300' // KALP BOŞ
+                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
+                                : 'bg-white text-gray-400 border-gray-300 hover:text-red-500 hover:border-red-300' 
                         }`}
                         title={favoriteBookIds.includes(book.id) ? "Favorilerden Çıkar" : "Favorilere Ekle"}
                     >
                         {favoriteBookIds.includes(book.id) ? "❤️" : "🤍"}
                     </button>
-                    {/* ------------------------------- */}
                   </>
                 )}
               </div>
@@ -296,7 +305,7 @@ const BooksPage = () => {
         ))}
 
         {filteredBooks.length === 0 && (
-            <div className="col-span-3 text-center py-10">
+            <div className="col-span-4 text-center py-10">
                 <p className="text-gray-500 text-lg">Aradığınız kriterlere uygun kitap bulunamadı.</p>
                 <button onClick={() => {setSearchTerm(""); setSelectedCategoryId(0);}} className="text-blue-600 hover:underline mt-2">
                     Filtreleri Temizle
@@ -305,18 +314,24 @@ const BooksPage = () => {
         )}
       </div>
 
-      {/* --- MODALLAR (AYNEN KALDI) --- */}
+      {/* --- MODALLAR --- */}
       
       {/* Kitap Güncelleme Modalı */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white p-6 rounded-lg w-full max-w-sm">
+          <div className="bg-white p-6 rounded-lg w-full max-w-sm space-y-3">
              <h3 className="text-lg font-bold mb-4 text-gray-800">Kitabı Düzenle</h3>
-             <div className="space-y-3">
-               <div><label className="text-sm font-medium">Kitap Adı</label><input type="text" className="w-full border p-2 rounded" value={editTitle} onChange={e => setEditTitle(e.target.value)} /></div>
-               <div><label className="text-sm font-medium">Sayfa Sayısı</label><input type="number" className="w-full border p-2 rounded" value={editPageCount} onChange={e => setEditPageCount(e.target.value)} /></div>
-               <div><label className="text-sm font-medium">Stok Adedi</label><input type="number" className="w-full border p-2 rounded" value={editStock} onChange={e => setEditStock(e.target.value)} /></div>
+             <div><label className="text-sm font-bold">Kitap Adı</label><input type="text" className="w-full border p-2 rounded" value={editTitle} onChange={e => setEditTitle(e.target.value)} /></div>
+             <div className="grid grid-cols-2 gap-2">
+                 <div><label className="text-sm font-medium">Sayfa</label><input type="number" className="w-full border p-2 rounded" value={editPageCount} onChange={e => setEditPageCount(e.target.value)} /></div>
+                 <div><label className="text-sm font-medium">Stok</label><input type="number" className="w-full border p-2 rounded" value={editStock} onChange={e => setEditStock(e.target.value)} /></div>
              </div>
+             
+             <div>
+                <label className="text-sm font-medium">Resim URL</label>
+                <input type="text" className="w-full border p-2 rounded text-sm" value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} placeholder="https://..." />
+             </div>
+
              <div className="flex gap-2 mt-4">
                  <button onClick={handleUpdateBook} className="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Kaydet</button>
                  <button onClick={() => setShowEditModal(false)} className="bg-gray-200 px-4 py-2 rounded text-gray-700 hover:bg-gray-300">İptal</button>

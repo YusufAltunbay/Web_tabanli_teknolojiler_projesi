@@ -25,8 +25,9 @@ export class BooksController {
     @Body('categoryId') categoryId: number,
     @Body('authorName') authorName: string,
     @Body('stock') stock: number,
+    @Body('imageUrl') imageUrl: string,
   ) {
-    return this.booksService.create(title, pageCount, categoryId, authorName, stock);
+    return this.booksService.create(title, pageCount, categoryId, authorName, stock, imageUrl);
   }
 
   // Sadece Admin: Kitap Güncelle (PUT)

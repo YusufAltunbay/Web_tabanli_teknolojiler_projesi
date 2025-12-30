@@ -22,14 +22,15 @@ export class BooksService {
   }
 
   // 2. Kitap Ekle
-  async create(title: string, pageCount: number, categoryId: number, authorName: string, stock: number) {
+  async create(title: string, pageCount: number, categoryId: number, authorName: string, stock: number, imageUrl: string) {
     const book = new Book();
     book.title = title;
     book.pageCount = pageCount;
     book.stock = stock;
+    book.imageUrl = imageUrl; // <-- YENİ: Kaydediyoruz
     book.category = { id: categoryId } as Category;
 
-    // Yazar kontrolü (Varsa bağla, yoksa oluştur)
+    // ... yazar işlemleri aynı ...
     let author = await this.authorRepository.findOne({ where: { name: authorName } });
     if (!author) {
       author = this.authorRepository.create({ name: authorName, bio: 'Otomatik oluşturuldu' });
