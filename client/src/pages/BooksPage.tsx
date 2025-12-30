@@ -3,6 +3,8 @@ import { api } from "../helper/api";
 import { useLoggedInUsersContext } from "../context/LoggedInUserContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+// YENİ: Dashboard bileşenini çağırıyoruz
+import AdminDashboard from "../components/AdminDashboard";
 
 type Author = { id: number; name: string };
 type Category = { id: number; name: string };
@@ -17,7 +19,7 @@ type Book = {
   authors: Author[];
 };
 
-// Resim yoksa gösterilecek varsayılan görsel (Daha hızlı ve güvenilir servis)
+// Resim yoksa gösterilecek varsayılan görsel
 const PLACEHOLDER_IMAGE = "https://placehold.co/300x450?text=Resim+Yok";
 
 const BooksPage = () => {
@@ -176,6 +178,12 @@ const BooksPage = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
+
+      {/* --- DASHBOARD ALANI (Sadece Admin Görür) --- */}
+      {loggedInUser?.role === 'admin' && (
+         <AdminDashboard />
+      )}
+      {/* ------------------------------------------- */}
       
       {/* Arama ve Filtreleme */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -215,17 +223,15 @@ const BooksPage = () => {
         {filteredBooks.map((book) => (
           <div key={book.id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden flex flex-col hover:shadow-xl transition-shadow h-full">
             
-            {/* --- RESİM ALANI (NETFLIX TARZI: UZUN VE TAM OTURAN) --- */}
+            {/* RESİM ALANI */}
             <div className="h-[400px] bg-gray-200 relative group overflow-hidden">
                 <img 
                     src={book.imageUrl || PLACEHOLDER_IMAGE} 
                     alt={book.title} 
-                    // GÜNCELLENDİ: object-top ile resmin üst kısmını koruyoruz
                     className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
-                    
                     onError={(e) => { 
                         const target = e.target as HTMLImageElement;
-                        target.onerror = null; // Sonsuz döngü kırıcı
+                        target.onerror = null; 
                         target.src = PLACEHOLDER_IMAGE; 
                     }}
                 />
@@ -233,7 +239,6 @@ const BooksPage = () => {
                     {book.stock > 0 ? `${book.stock} Stok` : 'Tükendi'}
                 </div>
             </div>
-            {/* --------------------------------------------------- */}
 
             {/* İçerik Alanı */}
             <div className="p-4 flex-grow flex flex-col justify-between">
