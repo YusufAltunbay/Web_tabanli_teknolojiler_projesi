@@ -57,9 +57,22 @@ const BooksPage = () => {
   const fetchCategories = () => api.get("categories").then((res) => setCategories(res.data)).catch(() => console.error("Kategoriler alınamadı"));
   const fetchMyFavorites = () => api.get("favorites").then((res) => { if(res.data) setFavoriteBookIds(res.data.map((fav: any) => fav.book.id)); }).catch(err => console.log(err));
 
+  // --- ARAMA MANTIĞI (GÜNCELLENDİ) ---
   const filteredBooks = books.filter((book) => {
-    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    
+    // 1. Kitap başlığında ara
+    const matchesTitle = book.title.toLowerCase().includes(searchLower);
+    
+    // 2. Yazar isimlerinde ara (YENİ EKLENDİ)
+    const matchesAuthor = book.authors?.some(author => 
+      author.name.toLowerCase().includes(searchLower)
+    );
+
+    // Başlıkta VEYA Yazarda varsa göster
+    const matchesSearch = matchesTitle || matchesAuthor;
     const matchesCategory = selectedCategoryId === 0 || book.category?.id === selectedCategoryId;
+    
     return matchesSearch && matchesCategory;
   });
 
