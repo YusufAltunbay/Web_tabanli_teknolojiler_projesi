@@ -64,6 +64,7 @@ const MyNavbar = () => {
                 <button onClick={() => navigate("/add-book")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/add-book")}`}>+ Kitap Ekle</button>
                 <button onClick={() => navigate("/admin-loans")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/admin-loans")}`}>📋 Ödünç Takip</button>
                 <button onClick={() => navigate("/users")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/users")}`}>👥 Kullanıcılar</button>
+                <button onClick={() => navigate("/admin-books")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/admin-books")}`}>📚 Kitap Listesi</button>
               </>
             )}
 

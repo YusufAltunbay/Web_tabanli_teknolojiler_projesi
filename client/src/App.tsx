@@ -14,6 +14,7 @@ import FavoritesPage from "./pages/FavoritesPage";
 import ProfilePage from "./pages/ProfilePage";       
 import ChatPage from "./pages/ChatPage"; // <-- YENİ EKLENDİ
 import MyNavbar from "./components/MyNavbar";
+import AdminBooksPage from "./pages/AdminBooksPage";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
             <Route path="/add-book" element={<AddBook />} />
             <Route path="/users" element={<UsersPage />} />           
             <Route path="/admin-loans" element={<AdminLoansPage />} /> 
+            <Route path="/admin-books" element={<AdminBooksPage />} />
 
             {/* --- ÜYE SAYFALARI --- */}
             <Route path="/my-loans" element={<UserLoansPage />} />
