@@ -1,13 +1,18 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLoggedInUsersContext } from "../context/LoggedInUserContext";
 import Cookies from "universal-cookie";
 import { DEFAULT_AVATAR } from "../helper/avatarData";
+import { api } from "../helper/api"; // API import etmeyi unutma
 
 const MyNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { loggedInUser, setLoggedInUser } = useLoggedInUsersContext();
   const cookies = new Cookies();
+  
+  // YENİ: Okunmamış mesaj sayısı state'i
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleLogout = () => {
     cookies.remove("loggedInUser", { path: '/' });
@@ -17,9 +22,24 @@ const MyNavbar = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path 
-      ? "bg-purple-100 text-purple-700 font-bold shadow-sm" // Aktif buton stili
-      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"; // Pasif buton stili
+      ? "bg-purple-100 text-purple-700 font-bold shadow-sm" 
+      : "text-gray-600 hover:bg-gray-50 hover:text-purple-600";
   };
+
+  // YENİ: Her 5 saniyede bir okunmamış mesaj sayısını kontrol et
+  useEffect(() => {
+    if (!loggedInUser) return;
+
+    const fetchUnread = () => {
+      api.get("messages/unread-total")
+         .then(res => setUnreadCount(res.data))
+         .catch(err => console.log(err));
+    };
+
+    fetchUnread(); // İlk açılışta çek
+    const interval = setInterval(fetchUnread, 5000); // 5 saniyede bir yenile
+    return () => clearInterval(interval);
+  }, [loggedInUser]);
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3 shadow-sm transition-all duration-300">
@@ -53,13 +73,24 @@ const MyNavbar = () => {
                 <button onClick={() => navigate("/favorites")} className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${isActive("/favorites")}`}>❤️ Favorilerim</button>
               </>
             )}
+
+            {/* SOHBET BUTONU VE BADGE (GÜNCELLENDİ) */}
+            {loggedInUser && (
+              <button onClick={() => navigate("/chat")} className={`relative px-4 py-2 rounded-full text-sm transition-all duration-200 flex items-center gap-1 ${isActive("/chat")}`}>
+                 💬 Sohbet
+                 {unreadCount > 0 && (
+                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md animate-pulse">
+                     {unreadCount}
+                   </span>
+                 )}
+              </button>
+            )}
         </div>
 
         {/* SAĞ: Kullanıcı ve Çıkış */}
         <div className="flex items-center gap-3">
           {loggedInUser ? (
             <div className="flex items-center gap-3 pl-2">
-              {/* Profil Alanı (Hap Şeklinde) */}
               <div 
                 className="hidden md:flex items-center gap-3 pr-4 pl-1 py-1 rounded-full border border-gray-200 bg-white hover:shadow-md cursor-pointer transition-all duration-200 group"
                 onClick={() => navigate("/profile")}
@@ -79,7 +110,6 @@ const MyNavbar = () => {
                 </div>
               </div>
 
-              {/* Çıkış Butonu (Mobil için ikonlu) */}
               <button
                 onClick={handleLogout}
                 className="bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 p-2 rounded-full transition-colors"

@@ -12,7 +12,7 @@ export class UsersController {
   // Admin: Tüm kullanıcıları listele
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UserRole.ADMIN)
+  //@Roles(UserRole.ADMIN)
   getAllUsers() {
     return this.usersService.findAll();
   }

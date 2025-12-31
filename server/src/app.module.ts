@@ -11,6 +11,7 @@ import { BooksModule } from './books/books.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { LoansModule } from './loans/loans.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { MessagesModule } from './messages/messages.module';
 
 
 @Module({
@@ -37,6 +38,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     ReviewsModule,
     LoansModule,
     FavoritesModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
