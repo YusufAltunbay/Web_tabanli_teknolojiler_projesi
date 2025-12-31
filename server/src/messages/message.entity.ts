@@ -15,11 +15,10 @@ export class Message {
   @Column({ default: false })
   isRead: boolean;
 
-  // Gönderen
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   sender: User;
 
-  // Alan
-  @ManyToOne(() => User, { eager: true })
+  // GÜNCELLEME: onDelete: 'CASCADE' ekledik
+  @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
   receiver: User;
 }
